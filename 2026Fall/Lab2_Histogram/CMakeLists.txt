@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.10)
+project(Lab2_Histogram LANGUAGES CXX)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui)
+include_directories(include)
+file(GLOB SOURCES "src/*.cpp")
+add_executable(${PROJECT_NAME} ${SOURCES})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

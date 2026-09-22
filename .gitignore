@@ -12,3 +12,11 @@ x64/
 Debug/
 Release/
 .ipch/
+
+# 忽略 VS Code 生成的临时文件
+.vscode/
+*.swp
+*~
+
+# 忽略 macOS 系统文件（如果组里有人用 Mac）
+.DS_Store

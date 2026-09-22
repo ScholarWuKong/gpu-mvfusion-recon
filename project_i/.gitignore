@@ -1,0 +1,40 @@
+# Build
+build/
+cmake-build-*/
+out/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+install_manifest.txt
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln
+*.vcxproj*
+Debug/
+Release/
+
+# Vscode
+.vscode/
+
+# CUDA
+*.cubin
+*.fatbin
+*.ptx
+
+# Python
+__pycache__/
+*.pyc
+
+# Generated data
+data/output/
+
+# OS
+.DS_Store
+Thumbs.db

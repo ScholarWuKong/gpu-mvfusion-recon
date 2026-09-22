@@ -42,18 +42,18 @@
 ## 📁 目录结构
 
 gpu-mvfusion-recon/
-├── 2026Fall/ # 阶段I：稀疏重建基础
-│ ├── 00_Docs/ # 课件与实验指导书
-│ ├── Lab1_OpenCV_Basics/ # 图像基本运算
-│ ├── Lab2_Histogram/ # 直方图与图像增强
-│ ├── Lab3_SpatialFilter/ # 空间滤波与去噪
-│ ├── Lab4_EdgeSegmentation/# 边缘检测与分割
-│ ├── Lab5_FeatureMatching/ # 特征提取与匹配(SIFT/ORB)
-│ ├── Lab6_CameraPose/ # 相机位姿估计与基础矩阵
-│ └── Lab7_Triangulation/ # 三角化与稀疏点云生成
-├── 2027Spring/ # 阶段II：稠密重建与优化
-├── 2027Fall/ # 阶段III：系统集成与部署
-├── docs/ # 技术文档
+├── 2026Fall/                 # 阶段I：稀疏重建基础
+│   ├── 00_Docs/              # 课件与实验指导书
+│   ├── Lab1_OpenCV_Basics/   # 图像基本运算
+│   ├── Lab2_Histogram/       # 直方图与图像增强
+│   ├── Lab3_SpatialFilter/   # 空间滤波与去噪
+│   ├── Lab4_EdgeSegmentation/# 边缘检测与分割
+│   ├── Lab5_FeatureMatching/ # 特征提取与匹配(SIFT/ORB)
+│   ├── Lab6_CameraPose/      # 相机位姿估计与基础矩阵
+│   └── Lab7_Triangulation/   # 三角化与稀疏点云生成
+├── 2027Spring/               # 阶段II：稠密重建与优化
+├── 2027Fall/                 # 阶段III：系统集成与部署
+├── docs/                     # 技术文档
 └── README.md
 
 ---

@@ -1,0 +1,14 @@
+bin/
+obj/
+build/
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.suo
+*.user
+*.vs/
+x64/
+Debug/
+Release/
+.ipch/

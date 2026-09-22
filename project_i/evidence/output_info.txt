@@ -1,0 +1,152 @@
+实验一输出信息汇总
+整理日期：2026-09-16
+来源：用户实际终端截图与T10文本日志；这是转录汇总，不是新执行日志。
+公共运行版本：Python 3.13.7 / OpenCV 5.0.0 / NumPy 2.5.2；历史程序版本号未记录。
+下面命令按已记录输入输出路径重建，非逐字转录；当前目录为project_i。
+属性为整理时只读解码核验；非0退出在T03/T07中属于预期行为。
+T11、T12未测试。
+
+T01补测
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/color.png' --output 'data/output/t01_color_recheck.png'
+input: color.png; shape=(1254, 1254, 3) dtype=uint8 channels=3
+output: t01_color_recheck.png; shape=(1254, 1254) dtype=uint8 channels=1
+elapsed_seconds=0.053015
+status=SUCCESS
+exit_code=0
+evidence: T01_color_recheck.png
+
+T02
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/color.jpg' --output 'data/output/jpeg_gray.png'
+input: color.jpg; shape=(1254, 1254, 3) dtype=uint8 channels=3
+output: jpeg_gray.png; shape=(1254, 1254) dtype=uint8 channels=1
+elapsed_seconds=0.032836
+status=SUCCESS
+exit_code=0
+evidence: T02_jpeg.png
+
+T03
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/does_not_exist.png' --output 'data/output/t03_result.png'
+input: does_not_exist.png; 不存在
+output: t03_result.png; 不存在
+elapsed_seconds=0.000502
+status=ERROR（预期拒绝）
+exit_code=1
+evidence: T03_missing_input.png
+
+T04原运行
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/gray.png' --output 'data/output/t04_gray.png'
+input: gray.png; shape=(1254, 1254) dtype=uint8 channels=1
+output: t04_gray.png; shape=(1254, 1254) dtype=uint8 channels=1
+elapsed_seconds=0.027811
+status=SUCCESS
+exit_code=原截图未显示；补测另列
+evidence: T04_gray.png
+
+T04补测
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/gray.png' --output 'data/output/t04_gray_recheck.png'
+input: gray.png; shape=(1254, 1254) dtype=uint8 channels=1
+output: t04_gray_recheck.png; shape=(1254, 1254) dtype=uint8 channels=1
+elapsed_seconds=0.023811
+status=SUCCESS
+exit_code=0
+evidence: T04_gray_recheck.png
+
+T05
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/rgba.png' --output 'data/output/t05_gray.png'
+input: rgba.png; shape=(100, 200, 4) dtype=uint8 channels=4
+output: t05_gray.png; shape=(100, 200) dtype=uint8 channels=1
+elapsed_seconds=0.005955
+status=SUCCESS
+exit_code=0
+evidence: T05_rgba.png
+
+T06
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/中文 测试.png' --output 'data/output/中文 灰度.png'
+input: 中文 测试.png; shape=(1254, 1254, 3) dtype=uint8 channels=3
+output: 中文 灰度.png; shape=(1254, 1254) dtype=uint8 channels=1
+elapsed_seconds=0.042036
+status=SUCCESS
+exit_code=0
+evidence: T06_chinese_path.png
+
+T07
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/broken.png' --output 'data/output/t07_result.png'
+input: broken.png; 无法解码
+output: t07_result.png; 不存在
+elapsed_seconds=0.001752
+status=ERROR（预期拒绝）
+exit_code=1
+evidence: T07_corrupted.png
+
+T08原运行
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/color.png' --output 'data/output/t08_new_folder/gray.png'
+input: color.png; shape=(1254, 1254, 3) dtype=uint8 channels=3
+output: t08_new_folder/gray.png; shape=(1254, 1254) dtype=uint8 channels=1
+elapsed_seconds=0.049466
+status=SUCCESS
+exit_code=0
+evidence: T08_create_directory.png
+
+T08补测
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/color.png' --output 'data/output/t08_recheck/gray.png'
+input: color.png; shape=(1254, 1254, 3) dtype=uint8 channels=3
+output: t08_recheck/gray.png; shape=(1254, 1254) dtype=uint8 channels=1
+elapsed_seconds=0.043632
+status=SUCCESS
+exit_code=0
+evidence: T08_directory_recheck.png
+
+T09黑
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/black.png' --output 'data/output/t09_black.png'
+input: black.png; shape=(100, 100, 3) dtype=uint8 channels=3
+output: t09_black.png; shape=(100, 100) dtype=uint8 channels=1
+elapsed_seconds=0.001501
+status=SUCCESS
+exit_code=0
+evidence: T09_black_white.png
+
+T09白
+command: & '..\..\.venv\Scripts\python.exe' '.\src\baseline_pipeline.py' --input 'data/input/white.png' --output 'data/output/t09_white.png'
+input: white.png; shape=(100, 100, 3) dtype=uint8 channels=3
+output: t09_white.png; shape=(100, 100) dtype=uint8 channels=1
+elapsed_seconds=0.005537
+status=SUCCESS
+exit_code=0
+evidence: T09_black_white.png
+
+T08补测前目录存在=False；补测后输出文件存在=True，均见截图。
+
+T10 第1次，以下为原日志文本：
+Python=3.13.7 OpenCV=5.0.0 NumPy=2.5.2
+input: D:\自学\数字动漫综设·三维重建\数漫实验\project_i\data\input\large_1080p.png
+output: D:\自学\数字动漫综设·三维重建\数漫实验\project_i\data\output\t10_run_1.png
+input shape=(1080, 1920, 3) dtype=uint8 channels=3
+处理方式：BGR转灰度
+output shape=(1080, 1920) dtype=uint8 channels=1
+elapsed_seconds=0.034961
+SUCCESS
+exit_code=0
+
+
+T10 第2次，以下为原日志文本：
+Python=3.13.7 OpenCV=5.0.0 NumPy=2.5.2
+input: D:\自学\数字动漫综设·三维重建\数漫实验\project_i\data\input\large_1080p.png
+output: D:\自学\数字动漫综设·三维重建\数漫实验\project_i\data\output\t10_run_2.png
+input shape=(1080, 1920, 3) dtype=uint8 channels=3
+处理方式：BGR转灰度
+output shape=(1080, 1920) dtype=uint8 channels=1
+elapsed_seconds=0.029327
+SUCCESS
+exit_code=0
+
+
+T10 第3次，以下为原日志文本：
+Python=3.13.7 OpenCV=5.0.0 NumPy=2.5.2
+input: D:\自学\数字动漫综设·三维重建\数漫实验\project_i\data\input\large_1080p.png
+output: D:\自学\数字动漫综设·三维重建\数漫实验\project_i\data\output\t10_run_3.png
+input shape=(1080, 1920, 3) dtype=uint8 channels=3
+处理方式：BGR转灰度
+output shape=(1080, 1920) dtype=uint8 channels=1
+elapsed_seconds=0.030701
+SUCCESS
+exit_code=0

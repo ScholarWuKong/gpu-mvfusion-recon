@@ -38,3 +38,6 @@ data/output/
 # OS
 .DS_Store
 Thumbs.db
+
+# Third-party dependencies
+third_party/opencv/

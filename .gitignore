@@ -20,3 +20,8 @@ Release/
 
 # 忽略 macOS 系统文件（如果组里有人用 Mac）
 .DS_Store
+
+# 忽略 Python 虚拟环境与缓存
+.venv/
+__pycache__/
+*.pyc

@@ -72,6 +72,45 @@ gpu-mvfusion-recon/
 
 ---
 
+## 🐍 环境配置（2026 Fall Python 实验）
+
+实验一~五均为 Python 实现，共用**仓库根目录的虚拟环境**（`.venv` 不入库，每台笔记本各自创建）。
+
+### 首次配置（Windows PowerShell）
+
+```powershell
+git clone https://github.com/ScholarWuKong/gpu-mvfusion-recon.git
+cd gpu-mvfusion-recon
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip check    # 应输出 No broken requirements found
+```
+
+### 核验环境
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 .\2026Fall\Lab1_OpenCV_Basics\src\version_check.py
+```
+
+### 依赖清单
+
+| 包 | 版本 | 用途 |
+| :--- | :--- | :--- |
+| opencv-python | 5.0.0.93 | 图像处理（cp37-abi3 wheel，Python 3.13/3.14 均可用） |
+| numpy | 2.5.3 | 数组计算 |
+| matplotlib | 3.11.2 | 绘图（实验二直方图等） |
+| scikit-image | 0.26.0 | SSIM 质量评价（实验三） |
+| pytest | 9.1.1 | 单元测试（实验五起） |
+
+### 注意事项
+
+- `.venv/`、`__pycache__/` 已加入 `.gitignore`，**不要提交虚拟环境**，每台笔记本各建各的。
+- `requirements.txt` 是当前环境快照（pip freeze）；换机器后如改动依赖，以实际 `pip freeze` 更新。
+- 环境记录按机器写入 `2026Fall/Lab1_OpenCV_Basics/docs/environment.md`，解释器路径因人而异。
+- C++ 实验骨架（Lab3-5 的 `CMakeLists.txt` + `src/main.cpp`）需另行配置 CMake 与 OpenCV C++；Python 交付不依赖它。
+
+---
+
 ## 👥 团队分工
 
 | 成员 | 负责模块 |

@@ -1,0 +1,11 @@
+﻿实验类别,参数设置,关键点数量,描述子维度
+nfeatures,0（不限制）,4364,128
+nfeatures,500,500,128
+nfeatures,1000,1000,128
+nfeatures,2000,2001,128
+contrastThreshold,0.01,8104,128
+contrastThreshold,0.04（默认）,4364,128
+contrastThreshold,0.08,2065,128
+edgeThreshold,5,3633,128
+edgeThreshold,10（默认）,4364,128
+edgeThreshold,20,4623,128

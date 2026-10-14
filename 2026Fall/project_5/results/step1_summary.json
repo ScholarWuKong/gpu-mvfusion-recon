@@ -1,0 +1,18 @@
+{
+  "image_shape_height_width": [
+    1240,
+    1754
+  ],
+  "opencv_version": "5.0.0",
+  "input_dtype": "float32",
+  "input_range": "0..255",
+  "blockSize": 2,
+  "ksize": 3,
+  "k": 0.04,
+  "response_min": -167808704.0,
+  "response_max": 418069600.0,
+  "threshold_ratio": 0.01,
+  "threshold": 4180696.0,
+  "selected_pixel_count_not_corner_count": 1261,
+  "note": "No NMS. Preview marks enlarged for visibility; full-size result marks exact selected pixels."
+}

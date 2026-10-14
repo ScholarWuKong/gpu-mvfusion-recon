@@ -1,6 +1,7 @@
 #include "scene/feature.h"
 
 #include <limits>
+#include <cmath>
 
 namespace sfm::scene
 {
@@ -17,6 +18,14 @@ std::size_t FeatureSet::size() const noexcept
 
 bool FeatureSet::hasValidDescriptors() const noexcept
 {
+    for (const auto& feature : features_)
+    {
+        if (feature.imageId_ != imageId_ || !std::isfinite(feature.keypoint_.x_) ||
+            !std::isfinite(feature.keypoint_.y_))
+        {
+            return false;
+        }
+    }
     if (features_.empty())
     {
         return descriptors_.empty();

@@ -201,7 +201,11 @@ BundleAdjustmentResult runOptimization(scene::Reconstruction& reconstruction,
             }
         }
         cv::Mat schur = cameraHessian.clone();
-        cv::Mat right = -cameraGradient;
+        cv::Mat right;
+        if (cameraDimension > 0)
+        {
+            right = -cameraGradient;
+        }
         for (int axis = 0; axis < cameraDimension; ++axis)
         {
             schur.at<double>(axis, axis) += damping * std::max(1.0, cameraHessian.at<double>(axis, axis));

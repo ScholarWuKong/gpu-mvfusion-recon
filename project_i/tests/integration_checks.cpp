@@ -382,6 +382,20 @@ void checkJacobians()
 void checkBundleAdjustment(const SyntheticScene& synthetic)
 {
     checkJacobians();
+    // With only the two fixed seed cameras, BA optimizes points only. This must
+    // not perform matrix arithmetic on the empty camera Schur system.
+    auto twoView = makeBaFixture(synthetic);
+    twoView.images_.erase(2);
+    for (auto& track : twoView.tracks_)
+    {
+        track.observations_.pop_back();
+    }
+    const auto twoViewResult = ba::createBundleAdjuster({})->optimize(twoView);
+    require(twoViewResult.attempted_ && twoViewResult.observationCount_ == 160 &&
+            twoViewResult.finalCost_ < twoViewResult.initialCost_ * 0.01,
+            "two fixed cameras support point-only BA without an empty matrix error");
+    std::cout << "PASS two-view point-only BA cost " << twoViewResult.initialCost_
+              << " -> " << twoViewResult.finalCost_ << '\n';
     auto filtered = makeBaFixture(synthetic);
     filtered.tracks_[0].observations_[0].enabled_ = false;
     filtered.tracks_[0].observations_[1].enabled_ = false;

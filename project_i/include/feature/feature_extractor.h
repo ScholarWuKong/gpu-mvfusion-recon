@@ -47,4 +47,7 @@ public:
 
 std::unique_ptr<IFeatureExtractor> createFeatureExtractor(const FeatureExtractorConfig& config);
 
+// Compatibility with the factory name specified in the project task.
+std::unique_ptr<IFeatureExtractor> CreateFeatureExtractor(const FeatureExtractorConfig& config);
+
 } // namespace sfm::feature

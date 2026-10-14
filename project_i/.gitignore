@@ -34,6 +34,7 @@ __pycache__/
 
 # Generated data
 data/output/
+output/
 
 # OS
 .DS_Store

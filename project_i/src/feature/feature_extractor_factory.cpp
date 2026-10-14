@@ -8,6 +8,11 @@
 namespace sfm::feature
 {
 
+std::unique_ptr<IFeatureExtractor> CreateFeatureExtractor(const FeatureExtractorConfig& config)
+{
+    return createFeatureExtractor(config);
+}
+
 std::unique_ptr<IFeatureExtractor> createFeatureExtractor(const FeatureExtractorConfig& config)
 {
     config.validate();

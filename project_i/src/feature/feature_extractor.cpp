@@ -1,6 +1,7 @@
 #include "feature/feature_extractor.h"
 
 #include <stdexcept>
+#include <cmath>
 
 namespace sfm::feature
 {
@@ -13,7 +14,7 @@ void FeatureExtractorConfig::validate() const
     {
         throw std::invalid_argument("nFeatures must be greater than zero.");
     }
-    if (scaleFactor_ <= 1.0f)
+    if (!std::isfinite(scaleFactor_) || scaleFactor_ <= 1.0f)
     {
         throw std::invalid_argument("scaleFactor must be greater than 1.0.");
     }
@@ -29,9 +30,9 @@ void FeatureExtractorConfig::validate() const
     {
         throw std::invalid_argument("firstLevel must be in [0, nLevels).");
     }
-    if (wtaK_ != 2 && wtaK_ != 3 && wtaK_ != 4)
+    if (wtaK_ != 2)
     {
-        throw std::invalid_argument("wtaK must be 2, 3, or 4.");
+        throw std::invalid_argument("This pipeline requires ORB wtaK=2 for Hamming matching.");
     }
     if (patchSize_ <= 0)
     {

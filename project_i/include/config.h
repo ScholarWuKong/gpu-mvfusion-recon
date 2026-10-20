@@ -12,6 +12,7 @@ struct MapperConfig
     std::size_t minInitialPoints_ = 15;
     std::size_t minPnpInliers_ = 12;
     bool runBundleAdjustment_ = true;
+    bool robustTriangulation_ = false;
     void validate() const;
 };
 }

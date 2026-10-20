@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <numeric>
 
 namespace sfm::geometry
 {
@@ -116,5 +117,117 @@ bool triangulatePoint(const std::vector<TriangulationView>& views, Vector3& poin
         }
     }
     return maxAngle >= minAngleDegrees;
+}
+
+bool triangulatePointRobust(const std::vector<TriangulationView>& views, Vector3& point,
+                            std::vector<std::size_t>& inlierViewIndices,
+                            const double maxReprojectionError, const double minAngleDegrees)
+{
+    inlierViewIndices.clear();
+    if (triangulatePoint(views, point, maxReprojectionError, minAngleDegrees))
+    {
+        inlierViewIndices.resize(views.size());
+        std::iota(inlierViewIndices.begin(), inlierViewIndices.end(), std::size_t{0});
+        return true;
+    }
+    if (views.size() < 3)
+    {
+        return false;
+    }
+    struct HypothesisPair
+    {
+        std::size_t first_;
+        std::size_t second_;
+        double angle_;
+    };
+    std::vector<Vector3> rays;
+    for (const auto& view : views)
+    {
+        const Vector3 cameraRay{(view.pixel_.x_ - view.camera_.cx_) / view.camera_.fx_,
+                                (view.pixel_.y_ - view.camera_.cy_) / view.camera_.fy_, 1.0};
+        Vector3 ray{};
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            for (int row = 0; row < 3; ++row)
+            {
+                ray[axis] += view.pose_.rotation_[3 * row + axis] * cameraRay[row];
+            }
+        }
+        const double length = std::sqrt(ray[0] * ray[0] + ray[1] * ray[1] + ray[2] * ray[2]);
+        for (auto& value : ray)
+        {
+            value /= length;
+        }
+        rays.push_back(ray);
+    }
+    std::vector<HypothesisPair> pairs;
+    for (std::size_t first = 0; first < views.size(); ++first)
+    {
+        for (std::size_t second = first + 1; second < views.size(); ++second)
+        {
+            const double dot = rays[first][0] * rays[second][0] + rays[first][1] * rays[second][1] +
+                               rays[first][2] * rays[second][2];
+            pairs.push_back({first, second, std::acos(std::clamp(dot, -1.0, 1.0))});
+        }
+    }
+    std::stable_sort(pairs.begin(), pairs.end(), [](const auto& first, const auto& second)
+    {
+        return first.angle_ > second.angle_;
+    });
+    constexpr std::size_t MAX_HYPOTHESES = 64;
+    const auto minimumInliers = std::max<std::size_t>(2, (3 * views.size() + 4) / 5);
+    double bestSquaredError = std::numeric_limits<double>::infinity();
+    for (std::size_t trial = 0; trial < std::min(MAX_HYPOTHESES, pairs.size()); ++trial)
+    {
+        const auto& pair = pairs[trial];
+        Vector3 candidate;
+        if (!triangulatePoint({views[pair.first_], views[pair.second_]}, candidate,
+                               maxReprojectionError, minAngleDegrees))
+        {
+            continue;
+        }
+        std::vector<std::size_t> inliers;
+        double squaredError = 0.0;
+        for (std::size_t index = 0; index < views.size(); ++index)
+        {
+            const double error = computeReprojectionError(candidate, views[index]);
+            if (error <= maxReprojectionError)
+            {
+                inliers.push_back(index);
+                squaredError += error * error;
+            }
+        }
+        if (inliers.size() >= minimumInliers && (inliers.size() > inlierViewIndices.size() ||
+            (inliers.size() == inlierViewIndices.size() && squaredError < bestSquaredError)))
+        {
+            point = candidate;
+            inlierViewIndices = std::move(inliers);
+            bestSquaredError = squaredError;
+        }
+    }
+    if (inlierViewIndices.empty())
+    {
+        return false;
+    }
+    std::vector<TriangulationView> consensus;
+    for (const auto index : inlierViewIndices)
+    {
+        consensus.push_back(views[index]);
+    }
+    Vector3 refined;
+    if (triangulatePoint(consensus, refined, maxReprojectionError, minAngleDegrees))
+    {
+        double refinedError = 0.0;
+        for (const auto& view : consensus)
+        {
+            const double error = computeReprojectionError(refined, view);
+            refinedError += error * error;
+        }
+        if (refinedError <= bestSquaredError)
+        {
+            point = refined;
+        }
+    }
+    return true;
 }
 }

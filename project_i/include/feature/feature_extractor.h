@@ -34,6 +34,12 @@ struct FeatureExtractorConfig
     int patchSize_ = 31;
     int fastThreshold_ = 20;
 
+    // GPU-only controls. A nonzero grid enables 2x candidate detection followed
+    // by balanced spatial selection, retaining at most nFeatures rows.
+    bool gpuBlurForDescriptor_ = false;
+    int gpuGridColumns_ = 0;
+    int gpuGridRows_ = 0;
+
     void validate() const;
 };
 

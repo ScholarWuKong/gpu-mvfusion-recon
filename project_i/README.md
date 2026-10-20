@@ -31,13 +31,31 @@ CMake 显式列出源文件；仅 BA 的自定义 kernel 文件按 CUDA 编译�
 .\build\RelWithDebInfo\project_i.exe --feature-backend gpu --ba gpu --output data/output/gpu .\data\image1.jpg .\data\image2.jpg
 ```
 
+### 使用已知内参与 GPU 覆盖配置
+
+当前器物数据的标定已保存在 `configs/camera_vase.json`：`fx=3334.23, fy=3341.06, cx=2057.09, cy=1548.96`，无畸变，对应 4096×3072 原始图像。程序不缩放图像，也不优化这组内参；如输入图像经过缩放或裁剪，需同步转换内参。
+
+```powershell
+# 原算法 + 已知内参，用作对照；输出目录必须是新目录。
+.\scripts\run_calibrated_sfm.ps1 -outputDirectory data/output/calibrated_baseline -featureCount 10000 -baseline
+
+# GPU 空间均衡、描述子平滑、弱纹理检测与稳健三角化。
+.\scripts\run_calibrated_sfm.ps1 -outputDirectory data/output/calibrated_coverage -featureCount 20000
+```
+
+也可直接传递 `--intrinsics 3334.23,3341.06,2057.09,1548.96`，它与 `--focal` 互斥。覆盖相关选项为 `--gpu-feature-grid 8x6`、`--gpu-orb-blur on`、`--fast-threshold 10`、`--robust-triangulation on`。未传这些选项时保留原有默认行为。
+
+网格选择先检测两倍候选，再按空间单元轮流选取响应较好的特征；保留数量不超过 `--nfeatures`，并同步复制描述子行。它改善有可检测纹理区域的分布，不会在纯色区域凭空生成特征。稳健三角化先尝试原有全视图 DLT，失败后才用最多 64 个双视图假设寻找至少 60% 的一致观测。
+
+本阶段目标为增加有效稀疏点和图像覆盖，不新增 MVS，也不为增点而放宽原有重投影阈值。
+
 可追加第三张及后续图像。使用 `--help` 查看全部选项；`--focal 1600` 指定所有图像的焦距（像素），`--nfeatures 10000` 调整 ORB 数量，`--ratio 0.8` 指定比例阈值，`--ba none` 禁用 BA。默认应用提取最多 5000 个特征，底层配置仍保留原有默认值 50000。
 
 输入应是同一静态场景的已去畸变图片。未指定焦距时，使用 `1.2 * max(width, height)` 并假设主点位于图像中心；这只是初始化估计。库接口允许为每张图像传入不同的 `Camera`。
 
 退出码：`0` 表示所有输入图像已注册且达到最少初始点数；`1` 表示参数、依赖或运行错误；`2` 表示匹配流程运行结束但没有完整重建。两图成功只能说明两视图初始化成功，不能代表多图增量流程得到真实数据验证。
 
-`data/` 当前两张器物视图已通过两视图重建验证：CPU 特征 + CPU BA 路径生成 485 个点，GPU 特征 + GPU BA 路径生成 404 个点；两种路径均使用 GPU 匹配器。真实图片的第三图及后续增量注册尚未验证。
+`data/` 当前 36 张器物视图已完成 GPU 增量重建验证。固定标定内参后，10k 特征基线生成 19,691 点；20k 特征覆盖增强生成 53,561 点，36/36 张全部注册，平均重投影误差约 0.50 px。覆盖指标、对照图和实现说明见 `docs/GPU稀疏点云覆盖改进.md`。
 
 ## 数据契约与增量接口
 

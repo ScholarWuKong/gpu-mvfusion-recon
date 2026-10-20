@@ -19,6 +19,7 @@ public:
     scene::FeatureSet extract(const scene::Image& image) override;
 
 private:
+    FeatureExtractorConfig config_;
     cv::Ptr<cv::cuda::ORB> orb_;
     cv::cuda::Stream stream_;
 };

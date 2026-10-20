@@ -1,0 +1,10 @@
+{
+  "model": "PINHOLE",
+  "image_width": 4096,
+  "image_height": 3072,
+  "fx": 3334.23,
+  "fy": 3341.06,
+  "cx": 2057.09,
+  "cy": 1548.96,
+  "distortion": [0.0, 0.0, 0.0, 0.0, 0.0]
+}

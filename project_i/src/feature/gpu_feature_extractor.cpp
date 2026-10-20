@@ -1,6 +1,7 @@
 #include "feature/gpu_feature_extractor.h"
 
 #include "feature_extractor_internal.h"
+#include "feature_selection.h"
 
 #include <opencv2/core/cuda.hpp>
 
@@ -10,7 +11,7 @@
 namespace sfm::feature
 {
 
-GpuFeatureExtractor::GpuFeatureExtractor(const FeatureExtractorConfig& config)
+GpuFeatureExtractor::GpuFeatureExtractor(const FeatureExtractorConfig& config) : config_(config)
 {
     config.validate();
 
@@ -23,7 +24,7 @@ GpuFeatureExtractor::GpuFeatureExtractor(const FeatureExtractorConfig& config)
 
     const int scoreType = static_cast<int>(detail::getCvORBScoreType(config.scoreType_));
     orb_ = cv::cuda::ORB::create(
-        config.nFeatures_,
+        config.gpuGridColumns_ > 0 ? 2 * config.nFeatures_ : config.nFeatures_,
         config.scaleFactor_,
         config.nLevels_,
         config.edgeThreshold_,
@@ -31,7 +32,8 @@ GpuFeatureExtractor::GpuFeatureExtractor(const FeatureExtractorConfig& config)
         config.wtaK_,
         scoreType,
         config.patchSize_,
-        config.fastThreshold_);
+        config.fastThreshold_,
+        config.gpuBlurForDescriptor_);
 
     if (orb_.empty())
     {
@@ -67,11 +69,17 @@ scene::FeatureSet GpuFeatureExtractor::extract(const scene::Image& image)
         stream_.waitForCompletion();
     }
 
-    return detail::makeFeatureSet(
+    auto features = detail::makeFeatureSet(
         image.id_,
         keypoints,
         descriptors,
         orb_->descriptorSize());
+    if (config_.gpuGridColumns_ > 0)
+    {
+        return detail::distributeFeatures(std::move(features), image.width_, image.height_,
+            static_cast<std::size_t>(config_.nFeatures_), config_.gpuGridColumns_, config_.gpuGridRows_);
+    }
+    return features;
 }
 
 } // namespace sfm::feature

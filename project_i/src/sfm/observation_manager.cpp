@@ -14,17 +14,36 @@ std::size_t ObservationManager::triangulateTracks(scene::Reconstruction& reconst
             continue;
         }
         std::vector<geometry::TriangulationView> views;
-        for (const auto& observation : track.observations_)
+        std::vector<std::size_t> observationIndices;
+        for (std::size_t index = 0; index < track.observations_.size(); ++index)
         {
+            const auto& observation = track.observations_[index];
             const auto& image = reconstruction.images_.at(observation.imageId_);
             if (image.registered_ && observation.enabled_)
             {
                 views.push_back({image.camera_, image.pose_, {observation.x_, observation.y_}});
+                observationIndices.push_back(index);
             }
         }
         Vector3 position;
-        if (geometry::triangulatePoint(views, position, config.maxReprojectionError_, config.minTriangulationAngle_))
+        std::vector<std::size_t> inliers;
+        const bool triangulated = config.robustTriangulation_
+            ? geometry::triangulatePointRobust(views, position, inliers,
+                                               config.maxReprojectionError_, config.minTriangulationAngle_)
+            : geometry::triangulatePoint(views, position, config.maxReprojectionError_, config.minTriangulationAngle_);
+        if (triangulated)
         {
+            if (config.robustTriangulation_)
+            {
+                for (const auto index : observationIndices)
+                {
+                    track.observations_[index].enabled_ = false;
+                }
+                for (const auto index : inliers)
+                {
+                    track.observations_[observationIndices[index]].enabled_ = true;
+                }
+            }
             const PointId id = reconstruction.points_.size();
             reconstruction.points_.push_back({id, track.id_, position});
             track.pointId_ = id;

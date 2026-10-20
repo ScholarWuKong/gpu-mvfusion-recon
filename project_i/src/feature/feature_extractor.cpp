@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <cmath>
+#include <limits>
 
 namespace sfm::feature
 {
@@ -10,6 +11,15 @@ IFeatureExtractor::~IFeatureExtractor() = default;
 
 void FeatureExtractorConfig::validate() const
 {
+    if (gpuGridColumns_ < 0 || gpuGridRows_ < 0 || gpuGridColumns_ > 64 || gpuGridRows_ > 64 ||
+        ((gpuGridColumns_ == 0) != (gpuGridRows_ == 0)))
+    {
+        throw std::invalid_argument("GPU feature grid must be disabled or have 1..64 columns and rows.");
+    }
+    if (gpuGridColumns_ > 0 && nFeatures_ > std::numeric_limits<int>::max() / 2)
+    {
+        throw std::invalid_argument("Feature count is too large for GPU grid oversampling.");
+    }
     if (nFeatures_ <= 0)
     {
         throw std::invalid_argument("nFeatures must be greater than zero.");

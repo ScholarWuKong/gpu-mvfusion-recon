@@ -1,4 +1,5 @@
 #include "app/integration_checks.h"
+#include "app/application_options.h"
 #include "ba/bundle_adjuster.h"
 #include "feature/feature_extractor.h"
 #include "geometry/triangulation.h"
@@ -8,6 +9,7 @@
 #include "sfm/observation_manager.h"
 #include "sfm/track_builder.h"
 #include "../src/ba/residual_internal.h"
+#include "../src/feature/feature_selection.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -115,6 +117,122 @@ scene::Image makeImage(const ImageId imageId)
     return image;
 }
 
+void checkApplicationOptions()
+{
+    const auto options = parseApplicationOptions({"--intrinsics", "3334.23,3341.06,2057.09,1548.96",
+        "--feature-backend", "gpu", "--nfeatures", "20000", "--gpu-feature-grid", "8x6",
+        "--gpu-orb-blur", "on", "--fast-threshold", "10", "--robust-triangulation", "on", "a.jpg", "b.jpg"});
+    const auto camera = cameraForImage(options, 4096, 3072);
+    require(std::abs(camera.fx_ - 3334.23) < 1e-9 && std::abs(camera.fy_ - 3341.06) < 1e-9 &&
+            std::abs(camera.cx_ - 2057.09) < 1e-9 && std::abs(camera.cy_ - 1548.96) < 1e-9,
+            "full calibration preserves unequal focal lengths and noncentral principal point");
+    require(options.featureConfig_.gpuGridColumns_ == 8 && options.featureConfig_.gpuGridRows_ == 6 &&
+            options.featureConfig_.gpuBlurForDescriptor_ && options.featureConfig_.fastThreshold_ == 10 &&
+            options.mapperConfig_.robustTriangulation_, "GPU coverage options parsed");
+    const auto legacy = cameraForImage(parseApplicationOptions({"--focal", "800", "a", "b"}), 800, 600);
+    require(legacy.fx_ == 800 && legacy.fy_ == 800 && legacy.cx_ == 399.5, "legacy focal option preserved");
+    for (const auto& calibration : {"1,2,3", "1,2,3,4,5", "1,2,3,4,", "0,2,3,4", "nan,2,3,4"})
+    {
+        requireThrows([&]
+        {
+            parseApplicationOptions({"--intrinsics", calibration, "a", "b"});
+        }, "malformed calibration rejected before GPU initialization");
+    }
+    requireThrows([]
+    {
+        parseApplicationOptions({"--intrinsics", "1,2,3,4", "--focal", "10", "a", "b"});
+    }, "ambiguous focal and full intrinsics rejected");
+    requireThrows([]
+    {
+        parseApplicationOptions({"--gpu-feature-grid", "0x6", "a", "b"});
+    }, "invalid spatial grid rejected");
+    std::cout << "PASS calibrated camera selection, legacy options and invalid parameters\n";
+}
+
+void checkSpatialFeatureSelection()
+{
+    scene::FeatureSet candidates;
+    candidates.imageId_ = 89;
+    candidates.descriptorSize_ = 32;
+    for (int index = 0; index < 12; ++index)
+    {
+        scene::Feature feature;
+        feature.imageId_ = candidates.imageId_;
+        feature.keypoint_.x_ = index < 10 ? 10.0f + index : index == 10 ? 150.0f : 250.0f;
+        feature.keypoint_.y_ = 20.0f;
+        feature.keypoint_.response_ = index < 10 ? 100.0f - index : 1.0f;
+        feature.keypoint_.classId_ = index;
+        candidates.features_.push_back(feature);
+        for (int byte = 0; byte < 32; ++byte)
+        {
+            candidates.descriptors_.push_back(static_cast<std::uint8_t>(index + byte));
+        }
+    }
+    const auto selected = feature::detail::distributeFeatures(candidates, 300, 100, 6, 3, 1);
+    require(selected.size() == 6 && selected.hasValidDescriptors() && selected.imageId_ == 89,
+            "spatial feature cap and data contract");
+    bool middlePresent = false;
+    bool rightPresent = false;
+    for (std::size_t row = 0; row < selected.size(); ++row)
+    {
+        const auto source = selected.features_[row].keypoint_.classId_;
+        middlePresent = middlePresent || source == 10;
+        rightPresent = rightPresent || source == 11;
+        for (std::size_t byte = 0; byte < 32; ++byte)
+        {
+            require(selected.descriptors_[row * 32 + byte] == static_cast<std::uint8_t>(source + byte),
+                    "descriptor rows follow spatially selected keypoints exactly");
+        }
+    }
+    require(middlePresent && rightPresent, "weakly textured occupied cells retain representatives");
+    scene::FeatureSet empty;
+    empty.imageId_ = 91;
+    empty.descriptorSize_ = 32;
+    const auto selectedEmpty = feature::detail::distributeFeatures(empty, 300, 100, 6, 3, 1);
+    require(selectedEmpty.empty() && selectedEmpty.imageId_ == 91, "empty spatial selection retains image ID");
+    std::cout << "PASS balanced spatial feature coverage and exact descriptor-row correspondence\n";
+}
+
+void checkRobustTriangulation(const SyntheticScene& synthetic)
+{
+    std::vector<geometry::TriangulationView> views;
+    scene::Reconstruction reconstruction;
+    scene::Track track;
+    track.id_ = 0;
+    for (ImageId imageId = 0; imageId < 4; ++imageId)
+    {
+        const auto pose = imageId < 3 ? synthetic.poses_[imageId] : geometry::CameraPose{};
+        geometry::PixelPoint pixel;
+        geometry::projectPoint(synthetic.points_[0], synthetic.camera_, pose, pixel);
+        if (imageId == 3)
+        {
+            pixel.x_ += 45.0;
+            pixel.y_ -= 35.0;
+        }
+        views.push_back({synthetic.camera_, pose, pixel});
+        reconstruction.images_[imageId] = {imageId, 800, 600, 1, synthetic.camera_, pose, true};
+        track.observations_.push_back({imageId, 0, pixel.x_, pixel.y_});
+    }
+    reconstruction.tracks_.push_back(track);
+    Vector3 position;
+    require(!geometry::triangulatePoint(views, position, 2.0, 1.0), "outlying view rejects all-view DLT fixture");
+    std::vector<std::size_t> inliers;
+    require(geometry::triangulatePointRobust(views, position, inliers, 2.0, 1.0) &&
+            inliers == std::vector<std::size_t>({0, 1, 2}), "robust triangulation recovers the three correct views");
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        require(std::abs(position[axis] - synthetic.points_[0][axis]) < 1e-8, "robust triangulation world-point accuracy");
+    }
+    MapperConfig config;
+    config.robustTriangulation_ = true;
+    const auto added = ObservationManager{}.triangulateTracks(reconstruction, config);
+    require(added == 1 && reconstruction.tracks_[0].pointId_ == 0 &&
+            !reconstruction.tracks_[0].observations_[3].enabled_ &&
+            reconstruction.tracks_[0].observations_[0].enabled_, "recovered Track retains source observation indices");
+    reconstruction.validate();
+    std::cout << "PASS robust Track recovery despite one bad observation\n";
+}
+
 void checkContractsAndExtraction()
 {
     scene::FeatureSet empty;
@@ -132,6 +250,12 @@ void checkContractsAndExtraction()
         feature::FeatureExtractorConfig config;
         config.backend_ = backend;
         config.nFeatures_ = 200;
+        if (backend == feature::FeatureBackend::GPU)
+        {
+            config.gpuGridColumns_ = 4;
+            config.gpuGridRows_ = 4;
+            config.gpuBlurForDescriptor_ = true;
+        }
         auto extractor = feature::CreateFeatureExtractor(config);
         const auto blank = extractor->extract(makeImage(17));
         require(blank.empty() && blank.imageId_ == 17 && blank.hasValidDescriptors(), "zero keypoint ORB contract");
@@ -536,9 +660,12 @@ void checkIncrementalMapping(const SyntheticScene& synthetic)
 int runIntegrationChecks()
 {
     const auto synthetic = makeSyntheticScene();
+    checkApplicationOptions();
+    checkSpatialFeatureSelection();
     checkContractsAndExtraction();
     checkGpuMatching(synthetic);
     checkGeometry(synthetic);
+    checkRobustTriangulation(synthetic);
     checkTracks(synthetic);
     checkBundleAdjustment(synthetic);
     checkIncrementalMapping(synthetic);

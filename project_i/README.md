@@ -36,8 +36,7 @@
 
 GitHub README 会过滤 JavaScript，因此这里使用可直接播放的旋转 GIF 展示三维结构；它不支持像交互查看器那样拖动旋转。静态截图与实验记录也一并保留。[GitHub 渲染规则](https://github.com/github/markup#github-markup)
 
-<details>
-<summary>查看重建前后对照与图像覆盖效果</summary>
+
 
 ### 标定基线与覆盖增强
 
@@ -55,7 +54,6 @@ GitHub README 会过滤 JavaScript，因此这里使用可直接播放的旋转 
 
 相对标定后的 10k 特征基线，20k 增强配置的平均有效观测覆盖格数（32 × 32 px）增加约 95%。该指标描述图像中的观测分布，不等同于物体表面积完整率。
 
-</details>
 
 完整配置、验证范围与复现命令见 [GPU 稀疏点云覆盖改进](docs/GPU稀疏点云覆盖改进.md)。上述展示资源存放在 `docs/assets/`，可以随仓库提交，不依赖被忽略的 `data/output/` 目录。
 

@@ -1,0 +1,17 @@
+{
+  "source": "data/output/gpu_calibrated_20261020/coverage_20k/points_colored.ply",
+  "point_count": 53561,
+  "input_views": 36,
+  "framing": "0.2 / 99.8 percentile subject viewport; original points unchanged",
+  "animation": {
+    "frames": 72,
+    "duration_ms": 80,
+    "loop": 0,
+    "size": [
+      760,
+      570
+    ]
+  },
+  "color_source": "RGB from enabled observations in original images",
+  "note": "Result figures use actual reconstruction data. No generated imagery is used for reconstruction results."
+}

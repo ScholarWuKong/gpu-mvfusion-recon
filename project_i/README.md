@@ -1,8 +1,63 @@
-# C++17 / CUDA 增量式 SfM
 
-本工程在 Windows x64、VS2022、CMake 上构建，使用项目内的 OpenCV 4.12.0 动态库和已安装的 CUDA 12.x。项目根目录是 `project_i`，Git 仓库在父目录。
+
+<p align="center">
+  <img src="docs/assets/mvfusion-logo.png" alt="MVFusion - stereo-camera robot with a porcelain point-cloud vase" width="420">
+</p>
+
+<h1 align="center">C++17 / CUDA 增量式 SfM</h1>
+
+<p align="center">
+  <img alt="C++17" src="https://img.shields.io/badge/C%2B%2B-17-00599C?style=flat-square&amp;logo=cplusplus&amp;logoColor=white">
+  <img alt="CUDA 12.x" src="https://img.shields.io/badge/CUDA-12.x-76B900?style=flat-square&amp;logo=nvidia&amp;logoColor=white">
+  <img alt="OpenCV 4.12.0" src="https://img.shields.io/badge/OpenCV-4.12.0-5C3EE8?style=flat-square&amp;logo=opencv&amp;logoColor=white">
+  <img alt="CMake 3.24+" src="https://img.shields.io/badge/CMake-3.24%2B-064F8C?style=flat-square&amp;logo=cmake&amp;logoColor=white">
+</p>
+<p align="center">
+  <img alt="MSVC / Visual Studio 2022" src="https://img.shields.io/badge/MSVC-Visual%20Studio%202022-5C2D91?style=flat-square">
+  <img alt="Platform Windows x64" src="https://img.shields.io/badge/Platform-Windows%20x64-0078D6?style=flat-square">
+</p>
+
+
+本工程在 Windows x64、VS2022、CMake 上构建，使用项目内的 [OpenCV 4.12.0 动态库](third_party/opencv) CUDA 12.x。项目根目录是 `project_i`，Git 仓库在父目录。
 
 目前已实现图像读取、CPU/GPU ORB、GPU 多图匹配、两视图几何验证、Track 构建、初始化、PnP 增量注册、三角化、CPU/GPU BA 和结果导出。只有一个正式应用 `project_i`；MVS 暂未实现。
+
+## 重建效果
+
+<p align="center">
+  <img src="docs/assets/point-cloud-rotation.gif" alt="瓶子彩色稀疏点云的 360 度旋转展示，来自真实 GPU SfM 重建结果" width="760">
+</p>
+
+<p align="center">
+  <strong>36 / 36 张图像注册 · 53,561 个稀疏点 · 平均重投影误差约 0.50 px</strong>
+</p>
+
+动图来自固定标定内参后的 GPU 重建结果：每图 20,000 个特征，采用 GPU ORB、CUDA Hamming 匹配与 GPU BA。颜色采样自原始图像，采用主体取景，完整点云仍保留离群点；当前结果为 SfM 稀疏点云。
+
+GitHub README 会过滤 JavaScript，因此这里使用可直接播放的旋转 GIF 展示三维结构；它不支持像交互查看器那样拖动旋转。静态截图与实验记录也一并保留。[GitHub 渲染规则](https://github.com/github/markup#github-markup)
+
+<details>
+<summary>查看重建前后对照与图像覆盖效果</summary>
+
+### 标定基线与覆盖增强
+
+![固定标定后的基线与增强点云三视图对照，采用相同坐标范围的主体取景](docs/assets/reconstruction-comparison.png)
+
+| 配置 | 已注册图像 | 稀疏点数 | 三视图及以上支持点 |
+| --- | ---: | ---: | ---: |
+| 标定基线，10k 特征 / 图 | 36 / 36 | 19,691 | 8,411 |
+| 覆盖增强，10k 特征 / 图 | 36 / 36 | 24,601 | 9,937 |
+| 覆盖增强，20k 特征 / 图 | 36 / 36 | 53,561 | 22,279 |
+
+### 有效观测覆盖
+
+![第 1、10、19、28 张图像的有效观测覆盖，左侧为基线，右侧为增强结果](docs/assets/image-coverage-comparison.jpg)
+
+相对标定后的 10k 特征基线，20k 增强配置的平均有效观测覆盖格数（32 × 32 px）增加约 95%。该指标描述图像中的观测分布，不等同于物体表面积完整率。
+
+</details>
+
+完整配置、验证范围与复现命令见 [GPU 稀疏点云覆盖改进](docs/GPU稀疏点云覆盖改进.md)。上述展示资源存放在 `docs/assets/`，可以随仓库提交，不依赖被忽略的 `data/output/` 目录。
 
 ## 构建与验证
 
@@ -55,7 +110,7 @@ CMake 显式列出源文件；仅 BA 的自定义 kernel 文件按 CUDA 编译�
 
 退出码：`0` 表示所有输入图像已注册且达到最少初始点数；`1` 表示参数、依赖或运行错误；`2` 表示匹配流程运行结束但没有完整重建。两图成功只能说明两视图初始化成功，不能代表多图增量流程得到真实数据验证。
 
-`data/` 当前 36 张器物视图已完成 GPU 增量重建验证。固定标定内参后，10k 特征基线生成 19,691 点；20k 特征覆盖增强生成 53,561 点，36/36 张全部注册，平均重投影误差约 0.50 px。覆盖指标、对照图和实现说明见 `docs/GPU稀疏点云覆盖改进.md`。
+`data/` 当前 36 张器物视图已完成 GPU 增量重建验证。固定标定内参后，10k 特征基线生成 19,691 点；20k 特征覆盖增强生成 53,561 点，36/36 张全部注册，平均重投影误差约 0.50 px。覆盖指标、对照图和实现说明见 [docs/GPU稀疏点云覆盖改进.md](docs/GPU稀疏点云覆盖改进.md)。
 
 ## 数据契约与增量接口
 
@@ -86,4 +141,4 @@ CPU/GPU BA 共享后端无关的 LM/Schur 求解器，使用解析雅可比与 H
 
 即使未重建成功，也导出匹配统计和未注册状态。输出默认位于 `output/reconstruction`；生成结果已加入忽略规则。
 
-完整的实际构建记录、验证范围和限制见 `docs/工程报告.md`。
+完整的实际构建记录、验证范围和限制见 [docs/工程报告.md](docs/工程报告.md)。
